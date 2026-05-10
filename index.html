@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#3366ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AI交易">
+  <meta name="description" content="专业级AI驱动ETF网格交易终端">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <title>AI ETF交易系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #1a2332;
+      --bg-card-hover: #1f2a40;
+      --border-color: #2e3a52;
+      --accent-green: #00d68f;
+      --accent-red: #ff3d71;
+      --accent-blue: #3366ff;
+      --accent-gold: #ffc107;
+      --text-primary: #ffffff;
+      --text-secondary: #8f9bb3;
+      --text-muted: #5a6178;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, var(--bg-primary) 0%, #0d1117 100%);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #app {
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-bottom: 80px;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+      min-height: calc(100vh - 80px);
+      padding: 24px 16px;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(46, 58, 82, 0.8);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .stat-up { color: var(--accent-green); }
+    .stat-down { color: var(--accent-red); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-green {
+      background: rgba(0, 214, 143, 0.2);
+      color: var(--accent-green);
+      border: 1px solid rgba(0, 214, 143, 0.3);
+    }
+
+    .badge-red {
+      background: rgba(255, 61, 113, 0.2);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 61, 113, 0.3);
+    }
+
+    .badge-blue {
+      background: rgba(51, 102, 255, 0.2);
+      color: var(--accent-blue);
+      border: 1px solid rgba(51, 102, 255, 0.3);
+    }
+
+    .badge-gold {
+      background: rgba(255, 193, 7, 0.2);
+      color: var(--accent-gold);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+      box-shadow: 0 4px 12px rgba(51, 102, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: rgba(51, 102, 255, 0.9);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: white;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Dashboard specific */
+    .market-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 0 16px;
+      margin: 0 -16px;
+      scrollbar-width: none;
+    }
+
+    .market-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .market-card {
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .quick-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quick-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .position-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .position-info {
+      display: flex;
+      gap: 12px;
+    }
+
+    .position-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(51, 102, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .position-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--bg-secondary);
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+
+    /* Grid Trading specific */
+    .grid-item {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .grid-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .grid-stat {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+    }
+
+    .grid-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .grid-stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* AI Plan specific */
+    .ai-card {
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    .ai-card.buy {
+      border-left-color: var(--accent-green);
+    }
+
+    .ai-card.sell {
+      border-left-color: var(--accent-red);
+    }
+
+    .ai-card.hold {
+      border-left-color: var(--accent-gold);
+    }
+
+    .confidence-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--accent-blue), var(--accent-green));
+      border-radius: 3px;
+      transition: width 0.8s ease-out;
+    }
+
+    /* Risk Center specific */
+    .risk-score {
+      text-align: center;
+      padding: 24px;
+    }
+
+    .risk-number {
+      font-size: 48px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .risk-bar {
+      height: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .risk-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 1s ease-out;
+    }
+
+    .risk-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Settings specific */
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-row:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .settings-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(51, 102, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .settings-info {
+      flex: 1;
+    }
+
+    .settings-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .settings-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 24px 0 12px 0;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255, 61, 113, 0.1);
+      border: 1px solid rgba(255, 61, 113, 0.3);
+      border-radius: 12px;
+      color: var(--accent-red);
+      font-weight: 500;
+      margin-top: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 61, 113, 0.2);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 14, 23, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-color);
+      padding: 8px 0;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+
+    .nav-items {
+      display: flex;
+      justify-content: space-around;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+    }
+
+    .nav-item.active {
+      color: var(--accent-blue);
+    }
+
+    .nav-item.active .nav-icon {
+      transform: scale(1.1);
+    }
+
+    .nav-icon {
+      font-size: 24px;
+      transition: transform 0.2s;
+    }
+
+    .nav-label {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .nav-indicator {
+      width: 32px;
+      height: 4px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .nav-item.active .nav-indicator {
+      opacity: 1;
+    }
+
+    /* Utility */
+    .text-sm { font-size: 14px; }
+    .text-xs { font-size: 12px; }
+    .text-lg { font-size: 18px; }
+    .text-xl { font-size: 20px; }
+    .text-2xl { font-size: 24px; }
+    .text-3xl { font-size: 30px; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mt-4 { margin-top: 16px; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-3 { margin-bottom: 12px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .p-2 { padding: 8px; }
+    .p-3 { padding: 12px; }
+    .p-4 { padding: 16px; }
+    .w-full { width: 100%; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Dashboard Page -->
+    <div id="dashboard" class="page active">
+      <div class="header">
+        <div>
+          <p class="text-sm text-secondary">今日收益</p>
+          <h1 class="font-mono" style="font-size: 30px;">+¥2,156.78</h1>
+        </div>
+        <span class="badge badge-green">📈 +1.75%</span>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="flex items-center gap-2 mb-2">
+            <span style="font-size: 16px;">💰</span>
+            <span class="text-xs text-secondary">总资产</span>
+          </div>
+          <p class="text-xl font-bold font-mono">¥125,680.42</p>
+        </div>
+        <div class="card">
+          <div class="flex items-center gap-2 mb-2">
+            <span style="font-size: 16px;">📊</span>
+            <span class="text-xs text-secondary">累计收益</span>
+          </div>
+          <p class="text-xl font-bold font-mono stat-up">+¥18,650.32</p>
+          <p class="text-xs font-mono stat-up">+17.42%</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">市场指数</h2>
+        <span class="text-sm" style="color: var(--accent-blue);">查看更多 →</span>
+      </div>
+
+      <div class="market-scroll mb-6">
+        <div class="card market-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm">上证指数</span>
+            <span class="badge badge-green">📈</span>
+          </div>
+          <p class="text-lg font-bold font-mono">3,156.28</p>
+          <p class="text-sm font-mono stat-up">+42.36 (+1.36%)</p>
+        </div>
+        <div class="card market-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm">深证成指</span>
+            <span class="badge badge-green">📈</span>
+          </div>
+          <p class="text-lg font-bold font-mono">10,565.82</p>
+          <p class="text-sm font-mono stat-up">+128.54 (+1.23%)</p>
+        </div>
+        <div class="card market-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm">创业板</span>
+            <span class="badge badge-green">📈</span>
+          </div>
+          <p class="text-lg font-bold font-mono">2,156.38</p>
+          <p class="text-sm font-mono stat-up">+35.82 (+1.69%)</p>
+        </div>
+        <div class="card market-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm">沪深300</span>
+            <span class="badge badge-green">📈</span>
+          </div>
+          <p class="text-lg font-bold font-mono">3,695.42</p>
+          <p class="text-sm font-mono stat-up">+56.78 (+1.56%)</p>
+        </div>
+      </div>
+
+      <h2 class="text-lg font-semibold mb-4">快捷入口</h2>
+      <div class="quick-grid mb-6">
+        <div class="card quick-item cursor-pointer" onclick="navigateTo('grid')">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="quick-icon" style="background: rgba(51, 102, 255, 0.2);">📊</div>
+            <span class="font-medium">网格交易</span>
+          </div>
+          <p class="text-xs text-secondary">自动化的价格区间套利</p>
+          <span class="badge badge-blue mt-2">2个策略</span>
+        </div>
+        <div class="card quick-item cursor-pointer" onclick="navigateTo('ai-plan')">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="quick-icon" style="background: rgba(0, 214, 143, 0.2);">🤖</div>
+            <span class="font-medium">AI计划</span>
+          </div>
+          <p class="text-xs text-secondary">智能信号量化决策</p>
+          <span class="badge badge-green mt-2">2个信号</span>
+        </div>
+        <div class="card quick-item cursor-pointer" onclick="navigateTo('risk')">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="quick-icon" style="background: rgba(255, 193, 7, 0.2);">🛡️</div>
+            <span class="font-medium">风险中心</span>
+          </div>
+          <p class="text-xs text-secondary">全方位风险监控预警</p>
+          <span class="badge badge-gold mt-2">4项指标</span>
+        </div>
+        <div class="card quick-item">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="quick-icon" style="background: rgba(255, 61, 113, 0.2);">🔔</div>
+            <span class="font-medium">提醒</span>
+          </div>
+          <p class="text-xs text-secondary">重要消息通知</p>
+          <span class="badge badge-red mt-2">3条未读</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">我的持仓</h2>
+        <span class="text-sm" style="color: var(--accent-blue);">全部持仓 →</span>
+      </div>
+
+      <div class="card">
+        <div class="position-item">
+          <div class="position-info">
+            <div class="position-icon">📈</div>
+            <div>
+              <p class="font-semibold">沪深300ETF</p>
+              <p class="text-xs text-secondary">510300</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold font-mono">¥42,850.00</p>
+            <p class="text-xs font-mono stat-up">+3.88%</p>
+          </div>
+        </div>
+        <div class="position-details">
+          <div>
+            <p class="text-xs text-secondary">持仓数量</p>
+            <p class="text-sm font-mono">10,000</p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">成本价</p>
+            <p class="text-sm font-mono">¥4.125</p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">浮动盈亏</p>
+            <p class="text-sm font-mono stat-up">+¥1,600</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="position-item">
+          <div class="position-info">
+            <div class="position-icon">📈</div>
+            <div>
+              <p class="font-semibold">创业板ETF</p>
+              <p class="text-xs text-secondary">159915</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold font-mono">¥12,090.00</p>
+            <p class="text-xs font-mono stat-up">+3.33%</p>
+          </div>
+        </div>
+        <div class="position-details">
+          <div>
+            <p class="text-xs text-secondary">持仓数量</p>
+            <p class="text-sm font-mono">5,000</p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">成本价</p>
+            <p class="text-sm font-mono">¥2.340</p>
+          </div>
+          <div>
+            <p class="text-xs text-secondary">浮动盈亏</p>
+            <p class="text-sm font-mono stat-up">+¥390</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Trading Page -->
+    <div id="grid" class="page">
+      <div class="header">
+        <div>
+          <h1 class="text-2xl font-bold">网格交易</h1>
+          <p class="text-sm text-secondary">自动化的价格区间套利策略</p>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="flex items-center gap-2 mb-2">
+            <span>💰</span>
+            <span class="text-xs text-secondary">总投入</span>
+          </div>
+          <p class="text-xl font-bold font-mono">¥80,000</p>
+        </div>
+        <div class="card">
+          <div class="flex items-center gap-2 mb-2">
+            <span>📊</span>
+            <span class="text-xs text-secondary">累计收益</span>
+          </div>
+          <p class="text-xl font-bold font-mono stat-up">+¥4,100.50</p>
+          <p class="text-xs font-mono stat-up">+5.13%</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">活跃策略</h2>
+        <button class="btn btn-primary">+ 新建策略</button>
+      </div>
+
+      <div class="card grid-item">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 214, 143, 0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">📊</div>
+            <div>
+              <p class="font-semibold">沪深300网格</p>
+              <p class="text-xs text-secondary">510300</p>
+            </div>
+          </div>
+          <div class="grid-status">
+            <span>▶️</span>
+            <span class="badge badge-green">运行中</span>
+          </div>
+        </div>
+
+        <div class="grid-stats">
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono">15</p>
+            <p class="grid-stat-label">网格数</p>
+          </div>
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono">5万</p>
+            <p class="grid-stat-label">投入金额</p>
+          </div>
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono stat-up">5.70%</p>
+            <p class="grid-stat-label">收益率</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-secondary" style="flex: 1;">⏸️ 暂停</button>
+          <button class="btn btn-secondary" style="flex: 1;">⚙️ 参数设置</button>
+        </div>
+      </div>
+
+      <div class="card grid-item">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 193, 7, 0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">📊</div>
+            <div>
+              <p class="font-semibold">创业板网格</p>
+              <p class="text-xs text-secondary">159915</p>
+            </div>
+          </div>
+          <div class="grid-status">
+            <span>⏸️</span>
+            <span class="badge badge-gold">已暂停</span>
+          </div>
+        </div>
+
+        <div class="grid-stats">
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono">10</p>
+            <p class="grid-stat-label">网格数</p>
+          </div>
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono">3万</p>
+            <p class="grid-stat-label">投入金额</p>
+          </div>
+          <div class="grid-stat">
+            <p class="grid-stat-value font-mono stat-up">4.17%</p>
+            <p class="grid-stat-label">收益率</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-primary" style="flex: 1;">▶️ 启动</button>
+          <button class="btn btn-secondary" style="flex: 1;">⚙️ 参数设置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Plan Page -->
+    <div id="ai-plan" class="page">
+      <div class="header">
+        <div>
+          <h1 class="text-2xl font-bold">AI 交易计划</h1>
+          <p class="text-sm text-secondary">智能信号，量化决策</p>
+        </div>
+      </div>
+
+      <div class="card-grid mb-6">
+        <div class="card text-center">
+          <div style="width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 10px; background: rgba(51, 102, 255, 0.2); display: flex; align-items: center; justify-content: center;">🧠</div>
+          <p class="text-2xl font-bold">79%</p>
+          <p class="text-xs text-secondary">平均置信度</p>
+        </div>
+        <div class="card text-center">
+          <div style="width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 10px; background: rgba(0, 214, 143, 0.2); display: flex; align-items: center; justify-content: center;">📈</div>
+          <p class="text-2xl font-bold stat-up">85%</p>
+          <p class="text-xs text-secondary">最高置信度</p>
+        </div>
+        <div class="card text-center">
+          <div style="width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 10px; background: rgba(255, 193, 7, 0.2); display: flex; align-items: center; justify-content: center;">⏰</div>
+          <p class="text-2xl font-bold">2</p>
+          <p class="text-xs text-secondary">待执行</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">交易信号</h2>
+        <span class="badge badge-blue">⚡ 实时更新</span>
+      </div>
+
+      <div class="card ai-card buy">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 214, 143, 0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">📈</div>
+            <div>
+              <p class="font-semibold">沪深300逢低加仓</p>
+              <p class="text-xs text-secondary">⏰ 2024-01-15 09:30</p>
+            </div>
+          </div>
+          <span class="badge badge-green">买入信号</span>
+        </div>
+
+        <p class="text-sm text-secondary mb-3">技术指标显示超跌反弹信号，RSI低于30，MACD底部金叉</p>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+          <div style="padding: 12px; background: var(--bg-secondary); border-radius: 10px;">
+            <div class="flex items-center gap-2 mb-1">
+              <span>🧠</span>
+              <span class="text-xs text-secondary">置信度</span>
+            </div>
+            <p class="text-xl font-bold font-mono">85%</p>
+            <div class="confidence-bar">
+              <div class="confidence-fill" style="width: 85%;"></div>
+            </div>
+          </div>
+          <div style="padding: 12px; background: var(--bg-secondary); border-radius: 10px;">
+            <div class="flex items-center gap-2 mb-1">
+              <span>⏰</span>
+              <span class="text-xs text-secondary">有效期</span>
+            </div>
+            <p class="text-xl font-bold font-mono">120分钟</p>
+          </div>
+        </div>
+
+        <div style="padding: 12px; background: var(--bg-secondary); border-radius: 10px; margin-bottom: 16px; display: flex; justify-content: space-between;">
+          <div class="flex items-center gap-2">
+            <span>🎯</span>
+            <span class="text-sm text-secondary">目标价</span>
+          </div>
+          <span class="font-mono stat-up">¥4.350</span>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" style="flex: 1;">⚡ 执行信号</button>
+          <button class="btn btn-secondary" style="flex: 1;">详情 →</button>
+        </div>
+      </div>
+
+      <div class="card ai-card hold">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 193, 7, 0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">➖</div>
+            <div>
+              <p class="font-semibold">创业板高抛低吸</p>
+              <p class="text-xs text-secondary">⏰ 2024-01-15 10:15</p>
+            </div>
+          </div>
+          <span class="badge badge-gold">持有观望</span>
+        </div>
+
+        <p class="text-sm text-secondary mb-4">当前价格处于震荡区间，建议观望等待突破</p>
+
+        <div style="padding: 12px; background: var(--bg-secondary); border-radius: 10px; margin-bottom: 16px;">
+          <div class="flex items-center gap-2 mb-1">
+            <span>🧠</span>
+            <span class="text-xs text-secondary">置信度</span>
+          </div>
+          <p class="text-xl font-bold font-mono">72%</p>
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width: 72%;"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary w-full">详情 →</button>
+      </div>
+    </div>
+
+    <!-- Risk Center Page -->
+    <div id="risk" class="page">
+      <div class="header">
+        <div>
+          <h1 class="text-2xl font-bold">风险中心</h1>
+          <p class="text-sm text-secondary">全方位风险监控与预警</p>
+        </div>
+      </div>
+
+      <div class="card risk-score">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <p class="text-sm text-secondary mb-1">综合风险评分</p>
+            <div class="flex items-center gap-2">
+              <span class="risk-number">47</span>
+              <span class="text-lg text-secondary">/100</span>
+            </div>
+          </div>
+          <div style="width: 64px; height: 64px; border-radius: 16px; background: rgba(255, 193, 7, 0.2); display: flex; align-items: center; justify-content: center; font-size: 32px;">⚠️</div>
+        </div>
+
+        <div class="risk-bar">
+          <div class="risk-fill" style="width: 47%; background: var(--accent-gold);"></div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="badge badge-gold">中风险</span>
+          <span class="text-sm text-secondary">基于 4 项指标</span>
+        </div>
+      </div>
+
+      <h2 class="text-lg font-semibold mb-4">风险指标详情</h2>
+
+      <div class="card risk-metric">
+        <div style="flex: 1;">
+          <p class="font-medium mb-3">仓位风险</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl font-bold font-mono">65</span>
+            <span class="text-sm text-secondary">/100</span>
+          </div>
+          <div class="risk-bar" style="height: 8px;">
+            <div class="risk-fill" style="width: 65%; background: var(--accent-green);"></div>
+          </div>
+        </div>
+        <span class="badge badge-green">安全</span>
+      </div>
+
+      <div class="card risk-metric">
+        <div style="flex: 1;">
+          <p class="font-medium mb-3">杠杆使用</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl font-bold font-mono">25</span>
+            <span class="text-sm text-secondary">/100</span>
+          </div>
+          <div class="risk-bar" style="height: 8px;">
+            <div class="risk-fill" style="width: 25%; background: var(--accent-green);"></div>
+          </div>
+        </div>
+        <span class="badge badge-green">安全</span>
+      </div>
+
+      <div class="card risk-metric">
+        <div style="flex: 1;">
+          <p class="font-medium mb-3">回撤控制</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl font-bold font-mono">82</span>
+            <span class="text-sm text-secondary">/100</span>
+          </div>
+          <div class="risk-bar" style="height: 8px;">
+            <div class="risk-fill" style="width: 82%; background: var(--accent-gold);"></div>
+          </div>
+        </div>
+        <span class="badge badge-gold">注意</span>
+      </div>
+
+      <div class="card risk-metric">
+        <div style="flex: 1;">
+          <p class="font-medium mb-3">流动性风险</p>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl font-bold font-mono">15</span>
+            <span class="text-sm text-secondary">/100</span>
+          </div>
+          <div class="risk-bar" style="height: 8px;">
+            <div class="risk-fill" style="width: 15%; background: var(--accent-green);"></div>
+          </div>
+        </div>
+        <span class="badge badge-green">安全</span>
+      </div>
+
+      <h2 class="text-lg font-semibold mb-4">风险控制建议</h2>
+
+      <div class="card">
+        <div class="flex items-start gap-3">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0, 214, 143, 0.2); display: flex; align-items: center; justify-content: center;">📈</div>
+          <div style="flex: 1;">
+            <p class="font-medium mb-1">仓位控制良好</p>
+            <p class="text-xs text-secondary">当前仓位风险处于安全区间，建议维持现有策略</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-start gap-3">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 193, 7, 0.2); display: flex; align-items: center; justify-content: center;">⚠️</div>
+          <div style="flex: 1;">
+            <p class="font-medium mb-1">注意回撤风险</p>
+            <p class="text-xs text-secondary">回撤控制指标接近警戒线，建议设置止损点</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-start gap-3">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(51, 102, 255, 0.2); display: flex; align-items: center; justify-content: center;">🔒</div>
+          <div style="flex: 1;">
+            <p class="font-medium mb-1">设置止损保护</p>
+            <p class="text-xs text-secondary">为防止极端行情，建议设置5%-8%的止损线</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Page -->
+    <div id="settings" class="page">
+      <div class="header">
+        <div>
+          <h1 class="text-2xl font-bold">设置</h1>
+          <p class="text-sm text-secondary">个性化配置与账户管理</p>
+        </div>
+      </div>
+
+      <div class="card user-card">
+        <div class="user-avatar">👤</div>
+        <div style="flex: 1;">
+          <h3 class="text-lg font-semibold">投资达人</h3>
+          <p class="text-sm text-secondary">ID: 88888888</p>
+          <span class="badge badge-green mt-2">🛡️ 已认证</span>
+        </div>
+        <span style="color: var(--text-muted);">→</span>
+      </div>
+
+      <p class="section-title">偏好设置</p>
+      <div class="card" style="padding: 0;">
+        <div class="settings-row">
+          <div class="settings-icon">🌙</div>
+          <div class="settings-info">
+            <p class="settings-title">深色模式</p>
+            <p class="settings-subtitle">已开启</p>
+          </div>
+          <span class="badge badge-blue">ON</span>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">🔔</div>
+          <div class="settings-info">
+            <p class="settings-title">消息通知</p>
+            <p class="settings-subtitle">接收交易提醒与AI信号</p>
+          </div>
+          <span class="badge badge-gold">3个</span>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">🌐</div>
+          <div class="settings-info">
+            <p class="settings-title">语言</p>
+            <p class="settings-subtitle">简体中文</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <p class="section-title">交易设置</p>
+      <div class="card" style="padding: 0;">
+        <div class="settings-row">
+          <div class="settings-icon">💳</div>
+          <div class="settings-info">
+            <p class="settings-title">支付方式</p>
+            <p class="settings-subtitle">绑定银行卡</p>
+          </div>
+          <span class="badge badge-green">已绑定</span>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">📱</div>
+          <div class="settings-info">
+            <p class="settings-title">交易限额</p>
+            <p class="settings-subtitle">单笔最大 ¥50,000</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">👁️</div>
+          <div class="settings-info">
+            <p class="settings-title">持仓显示</p>
+            <p class="settings-subtitle">成本价与盈亏展示</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <p class="section-title">安全设置</p>
+      <div class="card" style="padding: 0;">
+        <div class="settings-row">
+          <div class="settings-icon">🔒</div>
+          <div class="settings-info">
+            <p class="settings-title">登录密码</p>
+            <p class="settings-subtitle">已设置</p>
+          </div>
+          <span class="badge badge-green">已加密</span>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">🛡️</div>
+          <div class="settings-info">
+            <p class="settings-title">两步验证</p>
+            <p class="settings-subtitle">短信验证</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <p class="section-title">其他</p>
+      <div class="card" style="padding: 0;">
+        <div class="settings-row">
+          <div class="settings-icon">❓</div>
+          <div class="settings-info">
+            <p class="settings-title">帮助与反馈</p>
+            <p class="settings-subtitle">常见问题与联系客服</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-icon">ℹ️</div>
+          <div class="settings-info">
+            <p class="settings-title">关于应用</p>
+            <p class="settings-subtitle">版本 1.0.0</p>
+          </div>
+          <span style="color: var(--text-muted);">→</span>
+        </div>
+      </div>
+
+      <button class="logout-btn">🚪 退出登录</button>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <div class="nav-items">
+        <button class="nav-item active" onclick="navigateTo('dashboard')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">首页</span>
+          <div class="nav-indicator"></div>
+        </button>
+        <button class="nav-item" onclick="navigateTo('grid')">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">网格</span>
+          <div class="nav-indicator"></div>
+        </button>
+        <button class="nav-item" onclick="navigateTo('ai-plan')">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-label">AI计划</span>
+          <div class="nav-indicator"></div>
+        </button>
+        <button class="nav-item" onclick="navigateTo('risk')">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">风险</span>
+          <div class="nav-indicator"></div>
+        </button>
+        <button class="nav-item" onclick="navigateTo('settings')">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">设置</span>
+          <div class="nav-indicator"></div>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    function navigateTo(pageId) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      // Show target page
+      document.getElementById(pageId).classList.add('active');
+
+      // Update navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Find and activate the corresponding nav item
+      const navItems = document.querySelectorAll('.nav-item');
+      const pageIds = ['dashboard', 'grid', 'ai-plan', 'risk', 'settings'];
+      const index = pageIds.indexOf(pageId);
+      if (index !== -1 && navItems[index]) {
+        navItems[index].classList.add('active');
+      }
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+    }
+
+    // Initialize animations
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add stagger animation to cards
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+      });
+    });
+  </script>
+</body>
+</html>

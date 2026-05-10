@@ -1,0 +1,43 @@
+{
+  "name": "AI ETF交易系统",
+  "short_name": "AI交易",
+  "description": "专业级AI驱动ETF网格交易终端",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#3366ff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "trading"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "网格交易",
+      "short_name": "网格",
+      "description": "打开网格交易页面",
+      "url": "/#/grid",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI分析",
+      "short_name": "AI",
+      "description": "打开AI分析页面",
+      "url": "/#/ai-plan",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
