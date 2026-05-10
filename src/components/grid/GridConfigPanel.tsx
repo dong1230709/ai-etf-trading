@@ -8,6 +8,11 @@ import { gridEngine } from '../../engine/grid.engine';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 
+// 调试日志函数
+const debug = (message: string, ...args: any[]) => {
+  console.log(`[DEBUG-GridConfigPanel] ${message}`, ...args);
+};
+
 interface GridConfigPanelProps {
   symbol: string;
   name: string;
@@ -21,7 +26,7 @@ export function GridConfigPanel({
   name,
   currentPrice,
   onConfigChange,
-  onAIRecommend
+  onAIRecommend,
 }: GridConfigPanelProps) {
   const [config, setConfig] = useState<GridConfig>({
     symbol,
@@ -38,27 +43,35 @@ export function GridConfigPanel({
     autoRebalance: false,
   });
 
-  const [strategy, setStrategy] = useState<GridStrategy | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [strategy, setStrategy] = useState<GridStrategy | null>(null);
 
-  // 监听价格变化
   useEffect(() => {
+    debug('Component initialized or price changed', { currentPrice, symbol });
     setConfig(prev => ({
       ...prev,
+      symbol,
+      name,
       upperPrice: currentPrice * 1.1,
       lowerPrice: currentPrice * 0.9,
     }));
-  }, [currentPrice]);
+  }, [currentPrice, symbol, name]);
 
-  // 计算策略
   useEffect(() => {
+    debug('Config changed, recalculating strategy', config);
     const newStrategy = gridEngine.calculateStrategy(config);
+    debug('New strategy calculated', newStrategy);
     setStrategy(newStrategy);
     onConfigChange(config, newStrategy);
-  }, [config, currentPrice]);
+  }, [config]);
 
   const updateConfig = (updates: Partial<GridConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    debug('updateConfig called with updates', updates);
+    setConfig(prev => {
+      const newConfig = { ...prev, ...updates };
+      debug('Updated config', newConfig);
+      return newConfig;
+    });
   };
 
   return (
@@ -75,12 +88,17 @@ export function GridConfigPanel({
 
         {/* 网格数量 */}
         <div className="mb-4">
-          <label className="text-sm text-gray-400 mb-2 block">网格数量</label>
+          <label className="text-sm text-gray-400 mb-2 block">
+            网格数量: <span className="text-white font-mono">{config.gridCount}</span>
+          </label>
           <div className="grid grid-cols-5 gap-2">
             {[5, 10, 15, 20, 30].map(count => (
               <button
                 key={count}
-                onClick={() => updateConfig({ gridCount: count })}
+                onClick={() => {
+                  debug('Grid count button clicked', count);
+                  updateConfig({ gridCount: count });
+                }}
                 className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                   config.gridCount === count
                     ? 'bg-finance-blue text-white'
@@ -103,8 +121,13 @@ export function GridConfigPanel({
               <span className="text-xs text-gray-500 mb-1 block">上限价格</span>
               <input
                 type="number"
+                step="0.001"
                 value={config.upperPrice.toFixed(3)}
-                onChange={e => updateConfig({ upperPrice: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  debug('Upper price input changed', value);
+                  updateConfig({ upperPrice: value || 0 });
+                }}
                 className="w-full bg-finance-bg-secondary border border-finance-border rounded-lg px-3 py-2 text-white font-mono text-sm"
               />
             </div>
@@ -112,8 +135,13 @@ export function GridConfigPanel({
               <span className="text-xs text-gray-500 mb-1 block">下限价格</span>
               <input
                 type="number"
+                step="0.001"
                 value={config.lowerPrice.toFixed(3)}
-                onChange={e => updateConfig({ lowerPrice: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  debug('Lower price input changed', value);
+                  updateConfig({ lowerPrice: value || 0 });
+                }}
                 className="w-full bg-finance-bg-secondary border border-finance-border rounded-lg px-3 py-2 text-white font-mono text-sm"
               />
             </div>
@@ -121,28 +149,37 @@ export function GridConfigPanel({
           {/* 快捷设置 */}
           <div className="flex gap-2 mt-2">
             <button
-              onClick={() => updateConfig({
-                upperPrice: currentPrice * 1.05,
-                lowerPrice: currentPrice * 0.95
-              })}
+              onClick={() => {
+                debug('Quick setting ±5% clicked');
+                updateConfig({
+                  upperPrice: currentPrice * 1.05,
+                  lowerPrice: currentPrice * 0.95,
+                });
+              }}
               className="text-xs text-finance-blue hover:underline"
             >
               ±5%
             </button>
             <button
-              onClick={() => updateConfig({
-                upperPrice: currentPrice * 1.10,
-                lowerPrice: currentPrice * 0.90
-              })}
+              onClick={() => {
+                debug('Quick setting ±10% clicked');
+                updateConfig({
+                  upperPrice: currentPrice * 1.10,
+                  lowerPrice: currentPrice * 0.90,
+                });
+              }}
               className="text-xs text-finance-blue hover:underline"
             >
               ±10%
             </button>
             <button
-              onClick={() => updateConfig({
-                upperPrice: currentPrice * 1.15,
-                lowerPrice: currentPrice * 0.85
-              })}
+              onClick={() => {
+                debug('Quick setting ±15% clicked');
+                updateConfig({
+                  upperPrice: currentPrice * 1.15,
+                  lowerPrice: currentPrice * 0.85,
+                });
+              }}
               className="text-xs text-finance-blue hover:underline"
             >
               ±15%
@@ -161,7 +198,10 @@ export function GridConfigPanel({
             ].map(item => (
               <button
                 key={item.type}
-                onClick={() => updateConfig({ spacingType: item.type })}
+                onClick={() => {
+                  debug('Spacing type button clicked', item.type);
+                  updateConfig({ spacingType: item.type });
+                }}
                 className={`p-3 rounded-lg text-center transition-all ${
                   config.spacingType === item.type
                     ? 'bg-finance-blue/20 border border-finance-blue'
@@ -179,7 +219,7 @@ export function GridConfigPanel({
         {config.spacingType !== 'arithmetic' && (
           <div className="mb-4">
             <label className="text-sm text-gray-400 mb-2 block">
-              间距百分比: {config.spacingPercent.toFixed(1)}%
+              间距百分比: <span className="text-white font-mono">{config.spacingPercent.toFixed(1)}%</span>
             </label>
             <input
               type="range"
@@ -187,7 +227,11 @@ export function GridConfigPanel({
               max="5"
               step="0.1"
               value={config.spacingPercent}
-              onChange={e => updateConfig({ spacingPercent: parseFloat(e.target.value) })}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                debug('Spacing percent slider changed', value);
+                updateConfig({ spacingPercent: value });
+              }}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -211,7 +255,10 @@ export function GridConfigPanel({
             ].map(item => (
               <button
                 key={item.mode}
-                onClick={() => updateConfig({ fundMode: item.mode })}
+                onClick={() => {
+                  debug('Fund mode button clicked', item.mode);
+                  updateConfig({ fundMode: item.mode });
+                }}
                 className={`p-3 rounded-lg text-center transition-all ${
                   config.fundMode === item.mode
                     ? 'bg-finance-green/20 border border-finance-green'
@@ -229,7 +276,7 @@ export function GridConfigPanel({
         {/* 总资金 */}
         <div className="mb-4">
           <label className="text-sm text-gray-400 mb-2 block">
-            总资金: ¥{config.totalFund.toLocaleString()}
+            总资金: <span className="text-white font-mono">¥{config.totalFund.toLocaleString()}</span>
           </label>
           <input
             type="range"
@@ -237,7 +284,11 @@ export function GridConfigPanel({
             max="1000000"
             step="10000"
             value={config.totalFund}
-            onChange={e => updateConfig({ totalFund: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              debug('Total fund slider changed', value);
+              updateConfig({ totalFund: value });
+            }}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -250,7 +301,10 @@ export function GridConfigPanel({
 
         {/* 高级设置 */}
         <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
+          onClick={() => {
+            debug('Advanced settings toggle clicked');
+            setShowAdvanced(!showAdvanced);
+          }}
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
         >
           <Settings className="w-4 h-4" />
@@ -267,7 +321,10 @@ export function GridConfigPanel({
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-300">启用买入网格</span>
               <button
-                onClick={() => updateConfig({ buyEnabled: !config.buyEnabled })}
+                onClick={() => {
+                  debug('Buy enabled toggle clicked');
+                  updateConfig({ buyEnabled: !config.buyEnabled });
+                }}
                 className={`w-12 h-6 rounded-full transition-colors ${
                   config.buyEnabled ? 'bg-finance-green' : 'bg-gray-600'
                 }`}
@@ -281,32 +338,34 @@ export function GridConfigPanel({
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-300">启用卖出网格</span>
               <button
-                onClick={() => updateConfig({ sellEnabled: !config.sellEnabled })}
+                onClick={() => {
+                  debug('Sell enabled toggle clicked');
+                  updateConfig({ sellEnabled: !config.sellEnabled });
+                }}
                 className={`w-12 h-6 rounded-full transition-colors ${
                   config.sellEnabled ? 'bg-finance-red' : 'bg-gray-600'
                 }`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                   config.sellEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-                style={{ transform: config.sellEnabled ? 'translateX(24px)' : 'translateX(2px)' }}
-                />
+                }`} />
               </button>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-300">自动再平衡</span>
               <button
-                onClick={() => updateConfig({ autoRebalance: !config.autoRebalance })}
+                onClick={() => {
+                  debug('Auto rebalance toggle clicked');
+                  updateConfig({ autoRebalance: !config.autoRebalance });
+                }}
                 className={`w-12 h-6 rounded-full transition-colors ${
                   config.autoRebalance ? 'bg-finance-blue' : 'bg-gray-600'
                 }`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                   config.autoRebalance ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-                style={{ transform: config.autoRebalance ? 'translateX(24px)' : 'translateX(2px)' }}
-                />
+                }`} />
               </button>
             </div>
           </motion.div>
@@ -316,7 +375,10 @@ export function GridConfigPanel({
       {/* AI推荐按钮 */}
       <Card className="p-4">
         <button
-          onClick={onAIRecommend}
+          onClick={() => {
+            debug('AI recommend button clicked');
+            onAIRecommend();
+          }}
           className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-finance-blue to-finance-green rounded-xl text-white font-medium hover:opacity-90 transition-opacity"
         >
           <Brain className="w-5 h-5" />

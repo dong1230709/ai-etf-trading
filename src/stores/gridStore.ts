@@ -32,6 +32,11 @@ interface GridActions {
   getStrategyById: (id: string) => GridStrategyItem | undefined;
 }
 
+// 调试日志函数
+const debug = (message: string, ...args: any[]) => {
+  console.log(`[DEBUG-Grid] ${message}`, ...args);
+};
+
 export const useGridStore = create<GridState & GridActions>((set, get) => ({
   strategies: [
     {
@@ -62,6 +67,7 @@ export const useGridStore = create<GridState & GridActions>((set, get) => ({
   isCreating: false,
 
   createStrategy: (config) => {
+    debug('createStrategy', config);
     const id = `strategy_${Date.now()}`;
     const newStrategy: GridStrategyItem = {
       id,
@@ -83,6 +89,7 @@ export const useGridStore = create<GridState & GridActions>((set, get) => ({
   },
 
   updateStrategy: (id, updates) => {
+    debug('updateStrategy', id, updates);
     set(state => ({
       strategies: state.strategies.map(s =>
         s.id === id ? { ...s, ...updates } : s
@@ -91,6 +98,7 @@ export const useGridStore = create<GridState & GridActions>((set, get) => ({
   },
 
   deleteStrategy: (id) => {
+    debug('deleteStrategy', id);
     set(state => ({
       strategies: state.strategies.filter(s => s.id !== id),
       selectedStrategyId: state.selectedStrategyId === id ? null : state.selectedStrategyId
@@ -98,6 +106,7 @@ export const useGridStore = create<GridState & GridActions>((set, get) => ({
   },
 
   toggleStrategyStatus: (id) => {
+    debug('toggleStrategyStatus', id);
     set(state => ({
       strategies: state.strategies.map(s =>
         s.id === id
@@ -107,9 +116,20 @@ export const useGridStore = create<GridState & GridActions>((set, get) => ({
     }));
   },
 
-  setSelectedStrategy: (id) => set({ selectedStrategyId: id }),
-  setEditingConfig: (config) => set({ editingConfig: config }),
-  setIsCreating: (isCreating) => set({ isCreating }),
+  setSelectedStrategy: (id) => {
+    debug('setSelectedStrategy', id);
+    set({ selectedStrategyId: id });
+  },
+
+  setEditingConfig: (config) => {
+    debug('setEditingConfig', config);
+    set({ editingConfig: config });
+  },
+
+  setIsCreating: (isCreating) => {
+    debug('setIsCreating', isCreating);
+    set({ isCreating });
+  },
 
   getStrategyById: (id) => {
     return get().strategies.find(s => s.id === id);

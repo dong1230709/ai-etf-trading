@@ -10,12 +10,14 @@ interface AIRecommendationPanelProps {
   recommendation: AIRecommendation | null;
   onApply: (config: Partial<GridConfig>) => void;
   isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 export function AIRecommendationPanel({ 
   recommendation, 
   onApply,
-  isLoading 
+  isLoading,
+  onRefresh
 }: AIRecommendationPanelProps) {
   if (isLoading) {
     return (
@@ -44,11 +46,19 @@ export function AIRecommendationPanel({
         <div className="text-center py-6">
           <Brain className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 text-sm">
-            点击上方"AI智能推荐"按钮
+            获取AI智能推荐参数
           </p>
           <p className="text-gray-500 text-xs mt-1">
-            获取基于波动率的个性化网格参数
+            基于波动率分析的个性化网格参数
           </p>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="mt-4 px-6 py-2 bg-finance-blue rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+            >
+              开始分析
+            </button>
+          )}
         </div>
       </Card>
     );

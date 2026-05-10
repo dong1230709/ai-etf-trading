@@ -1,6 +1,7 @@
 // Dashboard页面 - 集成实时行情
 
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -13,10 +14,14 @@ import {
   Bot,
   Shield,
   Bell,
-  RefreshCw
+  RefreshCw,
+  Edit2,
+  X,
+  Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../stores/useAppStore';
+import { useMarketStore, Position as MarketPosition } from '../stores/marketStore';
 import { useQuotes } from '../hooks/useQuote';
 import { formatCurrency, formatPercent, getChangeColor, getChangeBg } from '../utils/format';
 import { Card } from '../components/ui/Card';
@@ -37,11 +42,19 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-export const Dashboard = () => {
+const debug = (message: string, ...args: any[]) => {
+  console.log(`[DEBUG-Dashboard] ${message}`, ...args);
+};
+
+export function Dashboard() {
   const navigate = useNavigate();
-  const { portfolio, positions } = useAppStore();
+  const { portfolio } = useAppStore();
+  const { positions, updatePosition } = useMarketStore();
   
-  // 实时行情Hook
+  const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
+  const [editQuantity, setEditQuantity] = useState<string>('');
+  const [editAvgPrice, setEditAvgPrice] = useState<string>('');
+
   const {
     dataMap: marketDataMap,
     isLoading: marketLoading,
@@ -53,7 +66,6 @@ export const Dashboard = () => {
     refreshInterval: 5000
   });
 
-  // ETF持仓行情
   const {
     dataMap: etfDataMap,
     isLoading: etfLoading,
@@ -64,7 +76,6 @@ export const Dashboard = () => {
     refreshInterval: 5000
   });
 
-  // 计算总收益（基于实时行情）
   const calculateRealProfit = () => {
     let totalProfit = 0;
     positions.forEach(position => {
@@ -79,7 +90,30 @@ export const Dashboard = () => {
   };
 
   const realProfit = calculateRealProfit();
-  const realProfitPercent = portfolio.totalValue > 0 ? (realProfit / (portfolio.totalValue - realProfit)) * 100 : 0;
+  const totalInvestment = positions.reduce((sum, p) => sum + (p.quantity * p.avgPrice), 0);
+  const realProfitPercent = totalInvestment > 0 ? (realProfit / totalInvestment) * 100 : 0;
+
+  const startEditPosition = (position: MarketPosition) => {
+    debug('startEditPosition', position);
+    setEditingPositionId(position.id);
+    setEditQuantity(position.quantity.toString());
+    setEditAvgPrice(position.avgPrice.toString());
+  };
+
+  const saveEditPosition = (id: string) => {
+    debug('saveEditPosition', id, { quantity: editQuantity, avgPrice: editAvgPrice });
+    const quantity = parseFloat(editQuantity);
+    const avgPrice = parseFloat(editAvgPrice);
+    if (!isNaN(quantity) && !isNaN(avgPrice)) {
+      updatePosition(id, { quantity, avgPrice });
+      setEditingPositionId(null);
+    }
+  };
+
+  const cancelEditPosition = () => {
+    debug('cancelEditPosition');
+    setEditingPositionId(null);
+  };
 
   return (
     <motion.div
@@ -88,7 +122,6 @@ export const Dashboard = () => {
       initial="hidden"
       animate="show"
     >
-      {/* 头部统计 */}
       <motion.header variants={item} className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -104,6 +137,7 @@ export const Dashboard = () => {
             </Badge>
             <button 
               onClick={() => {
+                debug('refresh all clicked');
                 refreshMarket();
                 refreshETF();
               }}
@@ -140,7 +174,6 @@ export const Dashboard = () => {
         </div>
       </motion.header>
 
-      {/* 市场指数 */}
       <motion.div variants={item} className="mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">市场指数</h2>
@@ -151,7 +184,10 @@ export const Dashboard = () => {
               </span>
             )}
             <button 
-              onClick={refreshMarket}
+              onClick={() => {
+                debug('refresh market clicked');
+                refreshMarket();
+              }}
               className="text-sm text-finance-blue flex items-center gap-1"
             >
               刷新
@@ -161,11 +197,9 @@ export const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* 市场指数卡片 */}
       <motion.div variants={item} className="mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4">
         <div className="flex gap-3 min-w-max">
           {marketLoading ? (
-            // 加载状态
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card min-w-[160px]">
                 <div className="h-4 w-20 skeleton rounded mb-2" />
@@ -174,7 +208,6 @@ export const Dashboard = () => {
               </div>
             ))
           ) : (
-            // 真实数据
             Object.values(marketDataMap).map((data, i) => {
               const isPositive = data.change >= 0;
               return (
@@ -211,7 +244,6 @@ export const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* 快捷入口 */}
       <motion.div variants={item} className="mb-4">
         <h2 className="text-lg font-semibold text-white">快捷入口</h2>
       </motion.div>
@@ -219,7 +251,10 @@ export const Dashboard = () => {
       <motion.div variants={item} className="grid grid-cols-2 gap-3 mb-6">
         <Card 
           className="p-4 cursor-pointer" 
-          onClick={() => navigate('/grid')}
+          onClick={() => {
+            debug('navigate to /grid');
+            navigate('/grid');
+          }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-finance-blue/20 rounded-xl">
@@ -236,7 +271,10 @@ export const Dashboard = () => {
 
         <Card 
           className="p-4 cursor-pointer" 
-          onClick={() => navigate('/ai-plan')}
+          onClick={() => {
+            debug('navigate to /ai-plan');
+            navigate('/ai-plan');
+          }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-finance-green/20 rounded-xl">
@@ -253,7 +291,10 @@ export const Dashboard = () => {
 
         <Card 
           className="p-4 cursor-pointer" 
-          onClick={() => navigate('/risk')}
+          onClick={() => {
+            debug('navigate to /risk');
+            navigate('/risk');
+          }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-finance-gold/20 rounded-xl">
@@ -283,7 +324,6 @@ export const Dashboard = () => {
         </Card>
       </motion.div>
 
-      {/* 我的持仓 - 实时行情 */}
       <motion.div variants={item} className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">我的持仓</h2>
         <button className="text-sm text-finance-blue flex items-center gap-1">
@@ -301,6 +341,7 @@ export const Dashboard = () => {
           const profit = currentValue - costValue;
           const profitPercent = costValue > 0 ? (profit / costValue) * 100 : 0;
           const isPositive = profit >= 0;
+          const isEditing = editingPositionId === position.id;
 
           return (
             <motion.div
@@ -320,17 +361,27 @@ export const Dashboard = () => {
                       <p className="text-xs text-gray-400">{position.symbol}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold font-mono text-white">
-                      {formatCurrency(currentValue)}
-                    </p>
-                    <p className={`text-xs font-mono ${getChangeColor(profitPercent)}`}>
-                      {formatPercent(profitPercent)}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        debug('edit position clicked');
+                        startEditPosition(position);
+                      }}
+                      className="p-1 hover:bg-finance-card-hover rounded"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <div className="text-right">
+                      <p className="font-bold font-mono text-white">
+                        {formatCurrency(currentValue)}
+                      </p>
+                      <p className={`text-xs font-mono ${getChangeColor(profitPercent)}`}>
+                        {formatPercent(profitPercent)}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* 实时价格标签 */}
                 {realData && (
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-1 bg-finance-green/20 text-finance-green rounded">
@@ -345,29 +396,82 @@ export const Dashboard = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-2 p-3 bg-finance-bg-secondary rounded-xl">
-                  <div>
-                    <p className="text-xs text-gray-400">持仓数量</p>
-                    <p className="text-sm font-mono text-white">{position.quantity}</p>
+                {isEditing ? (
+                  <div className="space-y-3 p-3 bg-finance-bg-secondary rounded-xl">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">持仓数量</p>
+                        <input
+                          type="number"
+                          value={editQuantity}
+                          onChange={(e) => {
+                            debug('edit quantity changed', e.target.value);
+                            setEditQuantity(e.target.value);
+                          }}
+                          className="w-full bg-finance-card border border-finance-border rounded-lg px-3 py-2 text-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">成本价</p>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={editAvgPrice}
+                          onChange={(e) => {
+                            debug('edit avg price changed', e.target.value);
+                            setEditAvgPrice(e.target.value);
+                          }}
+                          className="w-full bg-finance-card border border-finance-border rounded-lg px-3 py-2 text-white font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          debug('cancel edit clicked');
+                          cancelEditPosition();
+                        }}
+                        className="flex-1 py-2 bg-finance-card-hover rounded-lg text-gray-300 flex items-center justify-center gap-1"
+                      >
+                        <X className="w-4 h-4" />
+                        取消
+                      </button>
+                      <button
+                        onClick={() => {
+                          debug('save edit clicked');
+                          saveEditPosition(position.id);
+                        }}
+                        className="flex-1 py-2 bg-finance-blue rounded-lg text-white flex items-center justify-center gap-1"
+                      >
+                        <Check className="w-4 h-4" />
+                        保存
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">成本价</p>
-                    <p className="text-sm font-mono text-white">¥{position.avgPrice.toFixed(3)}</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 p-3 bg-finance-bg-secondary rounded-xl">
+                    <div>
+                      <p className="text-xs text-gray-400">持仓数量</p>
+                      <p className="text-sm font-mono text-white">{position.quantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">成本价</p>
+                      <p className="text-sm font-mono text-white">¥{position.avgPrice.toFixed(3)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">浮动盈亏</p>
+                      <p className={`text-sm font-mono ${getChangeColor(profit)}`}>
+                        {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400">浮动盈亏</p>
-                    <p className={`text-sm font-mono ${getChangeColor(profit)}`}>
-                      {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
-                    </p>
-                  </div>
-                </div>
+                )}
               </Card>
             </motion.div>
           );
         })}
       </motion.div>
 
-      {/* 数据来源提示 */}
       <motion.div variants={item} className="mt-6 text-center">
         <p className="text-xs text-gray-500">
           📊 数据来源: 新浪财经 · 腾讯财经 · 东方财富
@@ -378,4 +482,4 @@ export const Dashboard = () => {
       </motion.div>
     </motion.div>
   );
-};
+}
