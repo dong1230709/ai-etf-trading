@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>交互测试页面 - AI ETF交易系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            touch-action: manipulation;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e17 0%, #111827 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #00d68f;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin: 30px 0 15px;
+            color: #3366ff;
+        }
+        
+        .test-section {
+            background: #1a2332;
+            border: 1px solid #2e3a52;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .test-item {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8f9bb3;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            background: #111827;
+            border: 1px solid #2e3a52;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            z-index: 10;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3366ff;
+            box-shadow: 0 0 0 2px rgba(51, 102, 255, 0.2);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3366ff 0%, #00d68f 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            position: relative;
+            z-index: 10;
+            touch-action: manipulation;
+        }
+        
+        .btn:active {
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #1a2332;
+            border: 1px solid #2e3a52;
+            color: #8f9bb3;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 12px;
+            background: #111827;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: #00d68f;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .nav-test {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .nav-btn {
+            padding: 15px 10px;
+            background: #111827;
+            border: 1px solid #2e3a52;
+            border-radius: 8px;
+            color: #8f9bb3;
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        .nav-btn:active {
+            background: #3366ff;
+            color: white;
+            border-color: #3366ff;
+        }
+        
+        .slider-container {
+            margin-top: 10px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 40px;
+            background: transparent;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            background: #111827;
+            border-radius: 4px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #3366ff;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        
+        .slider-value {
+            text-align: center;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #00d68f;
+        }
+        
+        .grid-btn-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .grid-btn {
+            padding: 12px 5px;
+            background: #111827;
+            border: 1px solid #2e3a52;
+            border-radius: 8px;
+            color: #8f9bb3;
+            font-size: 14px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        .grid-btn.active {
+            background: #3366ff;
+            color: white;
+            border-color: #3366ff;
+        }
+        
+        .grid-btn:active {
+            opacity: 0.8;
+        }
+        
+        .info {
+            font-size: 12px;
+            color: #8f9bb3;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #00d68f;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .error-box {
+            background: rgba(255, 61, 113, 0.1);
+            border: 1px solid #ff3d71;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .error-box h3 {
+            color: #ff3d71;
+            margin-bottom: 10px;
+        }
+        
+        .error-box ul {
+            color: #8f9bb3;
+            font-size: 12px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 交互测试页面</h1>
+        
+        <div class="error-box">
+            <h3>⚠️ 问题诊断</h3>
+            <ul>
+                <li>如果按钮/滑块不能点击 → 检查是否有透明遮罩</li>
+                <li>如果按钮/滑块无反应 → 检查控制台错误</li>
+                <li>如果页面加载慢 → 检查网络连接</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>1. Input 输入测试</h2>
+            
+            <div class="test-item">
+                <label>ETF代码（6位数字）</label>
+                <input type="text" id="etfCode" placeholder="例如：510300" maxlength="6">
+            </div>
+            
+            <div class="test-item">
+                <label>持仓数量</label>
+                <input type="number" id="quantity" placeholder="例如：10000">
+            </div>
+            
+            <div class="result" id="inputResult">等待输入...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Button 按钮测试</h2>
+            
+            <button class="btn" id="btn1">主按钮（可点击）</button>
+            <button class="btn btn-secondary" id="btn2">次要按钮</button>
+            <button class="btn" id="btn3">新建策略</button>
+            
+            <div class="result" id="buttonResult">等待点击...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Slider 滑块测试</h2>
+            
+            <label>网格数量</label>
+            <div class="slider-container">
+                <input type="range" id="gridSlider" min="5" max="30" step="5" value="10">
+                <div class="slider-value" id="gridSliderValue">10格</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Grid 按钮组测试</h2>
+            
+            <div class="grid-btn-group">
+                <button type="button" class="grid-btn" data-value="5">5格</button>
+                <button type="button" class="grid-btn active" data-value="10">10格</button>
+                <button type="button" class="grid-btn" data-value="15">15格</button>
+                <button type="button" class="grid-btn" data-value="20">20格</button>
+                <button type="button" class="grid-btn" data-value="30">30格</button>
+            </div>
+            <div class="result" id="gridResult">当前选择：10格</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. 导航测试</h2>
+            <p class="info">点击下方按钮测试导航</p>
+            <div class="nav-test">
+                <button type="button" class="nav-btn">首页</button>
+                <button type="button" class="nav-btn">网格</button>
+                <button type="button" class="nav-btn">专业</button>
+                <button type="button" class="nav-btn">AI</button>
+                <button type="button" class="nav-btn">风险</button>
+                <button type="button" class="nav-btn">设置</button>
+            </div>
+            <div class="result" id="navResult">等待点击...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 测试说明</h2>
+            <p class="info">
+                <span class="status-indicator"></span>页面已加载<br><br>
+                <strong>如果点击无响应：</strong><br>
+                1. 长按按钮测试<br>
+                2. 尝试双击<br>
+                3. 检查浏览器控制台（F12）<br>
+                4. 换用其他浏览器
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🧪 测试脚本开始加载...');
+        
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOM加载完成');
+            
+            // Button 测试
+            const btn1 = document.getElementById('btn1');
+            const btn2 = document.getElementById('btn2');
+            const btn3 = document.getElementById('btn3');
+            const buttonResult = document.getElementById('buttonResult');
+            
+            function testButton(label) {
+                console.log('✓ 按钮被点击:', label);
+                buttonResult.innerHTML = '✓ ' + label + ' 被点击<br>时间: ' + new Date().toLocaleTimeString();
+                buttonResult.style.color = '#00d68f';
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }
+            
+            btn1.addEventListener('click', function(e) {
+                e.preventDefault();
+                testButton('主按钮');
+            });
+            
+            btn2.addEventListener('click', function(e) {
+                e.preventDefault();
+                testButton('次要按钮');
+            });
+            
+            btn3.addEventListener('click', function(e) {
+                e.preventDefault();
+                testButton('新建策略');
+            });
+            
+            // Slider 测试
+            const gridSlider = document.getElementById('gridSlider');
+            const gridSliderValue = document.getElementById('gridSliderValue');
+            
+            gridSlider.addEventListener('input', function() {
+                console.log('滑块值:', this.value);
+                gridSliderValue.textContent = this.value + '格';
+            });
+            
+            // Grid 按钮组
+            const gridBtns = document.querySelectorAll('.grid-btn');
+            const gridResult = document.getElementById('gridResult');
+            
+            gridBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Grid按钮被点击:', this.dataset.value);
+                    
+                    gridBtns.forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    gridResult.innerHTML = '✓ 已选择 ' + this.dataset.value + ' 格<br>时间: ' + new Date().toLocaleTimeString();
+                });
+            });
+            
+            // 导航按钮
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const navResult = document.getElementById('navResult');
+            
+            navBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('导航按钮被点击:', this.textContent);
+                    navResult.innerHTML = '✓ 导航到: ' + this.textContent + '<br>时间: ' + new Date().toLocaleTimeString();
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate(30);
+                    }
+                });
+            });
+            
+            // Input 监听
+            const etfCode = document.getElementById('etfCode');
+            const quantity = document.getElementById('quantity');
+            const inputResult = document.getElementById('inputResult');
+            
+            function updateInputResult() {
+                const code = etfCode.value;
+                const qty = quantity.value;
+                
+                if (code || qty) {
+                    inputResult.innerHTML = 'ETF: ' + (code || '-') + '\n持仓: ' + (qty || '-');
+                } else {
+                    inputResult.innerHTML = '等待输入...';
+                }
+            }
+            
+            etfCode.addEventListener('input', updateInputResult);
+            quantity.addEventListener('input', updateInputResult);
+            
+            console.log('✅ 所有事件监听器已绑定');
+        });
+        
+        // 捕获所有错误
+        window.onerror = function(msg, url, line) {
+            console.error('❌ JavaScript错误:', msg, 'Line:', line);
+            return false;
+        };
+    </script>
+</body>
+</html>
