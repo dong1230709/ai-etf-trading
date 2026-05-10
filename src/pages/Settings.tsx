@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { 
   Settings as SettingsIcon, 
   Moon, 
@@ -64,7 +65,17 @@ function SettingsRow({ icon: Icon, title, subtitle, badge, badgeVariant = 'defau
 }
 
 export const Settings = () => {
-  const { theme } = useAppStore();
+  const { theme, setTheme } = useAppStore();
+  const [notifications, setNotifications] = useState(true);
+  const [notificationsCount, setNotificationsCount] = useState(3);
+
+  const handleToggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleToggleNotifications = () => {
+    setNotifications(!notifications);
+  };
 
   return (
     <motion.div
@@ -116,14 +127,16 @@ export const Settings = () => {
             subtitle={theme === 'dark' ? '已开启' : '已关闭'}
             badge={theme === 'dark' ? 'ON' : 'OFF'}
             badgeVariant="blue"
+            onClick={handleToggleTheme}
           />
           <div className="h-px bg-finance-border mx-2" />
           <SettingsRow
             icon={Bell}
             title="消息通知"
             subtitle="接收交易提醒与AI信号"
-            badge="3个"
-            badgeVariant="gold"
+            badge={notifications ? `${notificationsCount}个` : '已关闭'}
+            badgeVariant={notifications ? "gold" : "default"}
+            onClick={handleToggleNotifications}
           />
           <div className="h-px bg-finance-border mx-2" />
           <SettingsRow

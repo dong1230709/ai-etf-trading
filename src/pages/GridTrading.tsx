@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { 
   Grid3X3, 
   TrendingUp, 
@@ -8,12 +9,16 @@ import {
   Settings,
   Wallet,
   PieChart,
-  Zap
+  Zap,
+  X,
+  Plus
 } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
+import { useGridStore } from '../stores/gridStore';
 import { formatCurrency, formatPercent, getChangeColor } from '../utils/format';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import type { GridConfig } from '../types/grid';
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,9 +37,58 @@ const item = {
 
 export const GridTrading = () => {
   const { gridStrategies, positions } = useAppStore();
+  const { 
+    strategies, 
+    createStrategy, 
+    toggleStrategyStatus, 
+    updateStrategy,
+    deleteStrategy,
+    isCreating,
+    setIsCreating
+  } = useGridStore();
+  
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newSymbol, setNewSymbol] = useState('510300');
+  const [newName, setNewName] = useState('沪深300ETF');
+  const [newGrids, setNewGrids] = useState(10);
+  const [newFund, setNewFund] = useState(50000);
+  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
 
-  const totalInvestment = gridStrategies.reduce((sum, s) => sum + s.totalInvestment, 0);
-  const totalProfit = gridStrategies.reduce((sum, s) => sum + s.profit, 0);
+  const handleCreateStrategy = () => {
+    const config: GridConfig = {
+      symbol: newSymbol,
+      name: newName,
+      gridCount: newGrids,
+      upperPrice: 4.5,
+      lowerPrice: 3.8,
+      spacingType: 'geometric',
+      spacingPercent: 1.0,
+      fundMode: 'fixed',
+      totalFund: newFund,
+      buyEnabled: true,
+      sellEnabled: true,
+      autoRebalance: false,
+    };
+    createStrategy(config);
+    setShowCreateModal(false);
+    setNewSymbol('510300');
+    setNewName('沪深300ETF');
+    setNewGrids(10);
+    setNewFund(50000);
+  };
+
+  const handleToggleStrategy = (id: string) => {
+    toggleStrategyStatus(id);
+  };
+
+  const handleDeleteStrategy = (id: string) => {
+    if (confirm('确定要删除这个策略吗？')) {
+      deleteStrategy(id);
+    }
+  };
+
+  const totalInvestment = strategies.reduce((sum, s) => sum + s.totalInvestment, 0);
+  const totalProfit = strategies.reduce((sum, s) => sum + s.profit, 0);
   const totalProfitPercent = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
 
   const getStatusIcon = (status: string) => {
@@ -95,14 +149,18 @@ export const GridTrading = () => {
       <motion.div variants={item} className="mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">活跃策略</h2>
-          <button className="btn-primary text-sm py-2">
-            + 新建策略
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary text-sm py-2 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            新建策略
           </button>
         </div>
       </motion.div>
 
       <motion.div variants={item} className="space-y-4">
-        {gridStrategies.map((strategy, index) => {
+        {strategies.map((strategy, index) => {
           const position = positions.find(p => p.symbol === strategy.symbol);
           
           return (
@@ -181,7 +239,10 @@ export const GridTrading = () => {
                 )}
 
                 <div className="flex gap-2">
-                  <button className="btn-secondary flex-1 text-sm py-2.5 flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => handleToggleStrategy(strategy.id)}
+                    className="btn-secondary flex-1 text-sm py-2.5 flex items-center justify-center gap-2"
+                  >
                     {strategy.status === 'active' ? (
                       <>
                         <Pause className="w-4 h-4" />
@@ -194,9 +255,18 @@ export const GridTrading = () => {
                       </>
                     )}
                   </button>
-                  <button className="btn-secondary flex-1 text-sm py-2.5 flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => setEditingStrategy(strategy.id)}
+                    className="btn-secondary flex-1 text-sm py-2.5 flex items-center justify-center gap-2"
+                  >
                     <Settings className="w-4 h-4" />
                     参数设置
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteStrategy(strategy.id)}
+                    className="btn-secondary px-3 py-2.5 text-finance-red hover:bg-finance-red/10"
+                  >
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </Card>
@@ -204,6 +274,111 @@ export const GridTrading = () => {
           );
         })}
       </motion.div>
+
+      {/* 创建策略模态框 */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            className="relative w-full max-w-md bg-finance-card border border-finance-border rounded-t-3xl sm:rounded-2xl p-6 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">新建网格策略</h3>
+              <button 
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 hover:bg-finance-bg-secondary rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">ETF代码</label>
+                <input
+                  type="text"
+                  value={newSymbol}
+                  onChange={(e) => setNewSymbol(e.target.value)}
+                  className="w-full bg-finance-bg-secondary border border-finance-border rounded-lg px-4 py-3 text-white font-mono"
+                  placeholder="例如：510300"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">策略名称</label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full bg-finance-bg-secondary border border-finance-border rounded-lg px-4 py-3 text-white"
+                  placeholder="例如：沪深300网格"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  网格数量: {newGrids}
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[5, 10, 15, 20, 30].map(count => (
+                    <button
+                      key={count}
+                      onClick={() => setNewGrids(count)}
+                      className={`py-2 rounded-lg text-sm font-medium transition-all ${
+                        newGrids === count
+                          ? 'bg-finance-blue text-white'
+                          : 'bg-finance-bg-secondary text-gray-300 hover:bg-finance-card-hover'
+                      }`}
+                    >
+                      {count}格
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  投入资金: ¥{newFund.toLocaleString()}
+                </label>
+                <input
+                  type="range"
+                  min="10000"
+                  max="1000000"
+                  step="10000"
+                  value={newFund}
+                  onChange={(e) => setNewFund(parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1万</span>
+                  <span>50万</span>
+                  <span>100万</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-3 bg-finance-bg-secondary rounded-xl text-gray-300 font-medium hover:bg-finance-card-hover transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCreateStrategy}
+                  className="flex-1 py-3 bg-gradient-to-r from-finance-blue to-finance-green rounded-xl text-white font-medium hover:opacity-90 transition-opacity"
+                >
+                  创建策略
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <motion.div variants={item} className="mt-6">
         <h2 className="text-lg font-semibold text-white mb-4">网格原理</h2>
